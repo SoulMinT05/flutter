@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:todo_demo/pages/todo_screen.dart';
 import 'package:easy_localization/easy_localization.dart';
 
@@ -30,6 +31,8 @@ import 'package:easy_localization/easy_localization.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
+  await Hive.initFlutter();
+  await Hive.openBox('settings');
 
   runApp(
     EasyLocalization(
@@ -46,11 +49,21 @@ void main() async {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    var settingBox = Hive.box('settings');
+
+    var savedLangCode = settingBox.get(
+      'language',
+      defaultValue: context.fallbackLocale?.languageCode,
+    );
+
+    Locale savedLocale = Locale(savedLangCode);
+
     return MaterialApp(
       title: 'Todo App',
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
-      locale: context.locale,
+      // locale: context.locale,
+      locale: savedLocale,
       home: HomePage(),
     );
   }
@@ -68,11 +81,15 @@ class HomePage extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.language),
             onPressed: () {
+              var settingBox = Hive.box('settings');
+
               // Đổi locale giữa en <-> vi
               if (context.locale.languageCode == 'en') {
                 context.setLocale(Locale('vi'));
+                settingBox.put('language', 'vi');
               } else {
                 context.setLocale(Locale('en'));
+                settingBox.put('language', 'en');
               }
             },
           ),
